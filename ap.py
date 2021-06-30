@@ -13,16 +13,17 @@ from kazoo.client import KazooState
 
 import logging
 logging.basicConfig()
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
-def my_listener(state):
-    if state == KazooState.LOST:
-        # Register somewhere that the session was lost
-    elif state == KazooState.SUSPENDED:
-        # Handle being disconnected from Zookeeper
-    else:
-        # Handle being connected/reconnected to Zookeeper
+# def my_listener(state):
+#     if state == KazooState.LOST:
+#         # Register somewhere that the session was lost
+#     elif state == KazooState.SUSPENDED:
+#         # Handle being disconnected from Zookeeper
+#     else:
+#         # Handle being connected/reconnected to Zookeeper
 
 
 
@@ -31,31 +32,19 @@ zk = KazooClient()
 
 def do_something():
     now = datetime.now()
-    print(f'Now is at {now}')
+    logger.info(f'>>> Now is at {now}')
 
 @zk.DataWatch("/my/favorite")
 def on_conf_update(data, stat):
-    print(data, stat)
-    set_job()
-
-
-def set_job(conf):
-    tg = CronTrigger.from_crontab(conf)
-    scheduler.add_job(do_something,
-                      trigger=tg,
-                      id="dosomething",
-                      replace_existing=True,
-                      misfire_grace_time=3600)
-
-
-
-zk.start()
+    logger.info(f'Config updated: data: {data}, stat: {stat}')
+    conf = data.decode(encoding='utf-8')
+    set_job(conf)
 
 mongostore = MongoDBJobStore(
         host='127.0.0.1',
         port=27017,
         database='jobs',
-        collection="monitor_server_jobs",
+        collection="jobs",
     )
 scheduler = BlockingScheduler(
     logger=logger,
@@ -65,4 +54,17 @@ scheduler = BlockingScheduler(
     timezone='Asia/Shanghai',
 )
 
+def set_job(conf):
+    tg = CronTrigger.from_crontab(conf)
+    scheduler.add_job(do_something,
+                      trigger=tg,
+                      id="AJOB",
+                      replace_existing=True,
+                      misfire_grace_time=3600)
+
+
+
+zk.start()
+
+logger.info('Scheduler Started.')
 scheduler.start()
