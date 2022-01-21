@@ -68,3 +68,11 @@ zk.start()
 
 logger.info('Scheduler Started.')
 scheduler.start()
+
+from sqlalchemy import MetaData, event, create_engine
+import pymysql
+
+engine = create_engine('mysql+pymysql://root:123456@192.168.20.16:3306/demo?charset=utf8mb4')
+@event.listens_for(engine, 'do_connect')
+def receive_do_connect(dialect, conn_rec, cargs, cparams):
+    pass
