@@ -18,16 +18,28 @@ class QueueConsumer(object):
     def start(self):
         pass
 
-    def serve(self):
+    def serve(self, msg_handler):
         while 1:
             time.sleep(10)
 
 
 class LocalMsgTable(object):
 
-    def add_msg(self, msg):
+    def prepare(self, msg):
         """添加消息到本地消息表"""
         pass
+
+    def commit(self, msg):
+        """将消息置为已提交态"""
+        pass
+
+    def rollback(self):
+        pass
+
+
+    def monitor_callback(self):
+        consumer = QueueConsumer()
+        consumer.serve(self.commit)
 
     def monitor_loop(self, gap=10):
         """监控本地消息表，定时轮询"""
@@ -59,7 +71,7 @@ def main_task():
 
     with trans as tran:
         do_some_work(tran)
-        table.add_msg(msg)
+        table.prepare(msg)
     producer.send(msg)
 
 
